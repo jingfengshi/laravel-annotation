@@ -91,10 +91,13 @@ abstract class Job
      */
     public function fire()
     {
+        // 获取 job 内容
         $payload = $this->payload();
-
+        
+        //获取 job 的 类 和 触发方法
         [$class, $method] = JobName::parse($payload['job']);
 
+        // 处理任务
         ($this->instance = $this->resolve($class))->{$method}($this, $payload['data']);
     }
 
@@ -187,6 +190,10 @@ abstract class Job
             // If the job has failed, we will delete it, call the "failed" method and then call
             // an event indicating the job has failed so it can be logged if needed. This is
             // to allow every developer to better keep monitor of their failed queue jobs.
+            // 如果 job 已经失败了，我们会删除它。然后调用 failed 方法
+            // 最后调用一个事件方便记录日志
+            // 允许每个开发者更好的监听 队列任务失败
+            // 将任务标记位删除
             $this->delete();
 
             $this->failed($e);
@@ -205,10 +212,13 @@ abstract class Job
      */
     protected function failed($e)
     {
+        //获取任务数据
         $payload = $this->payload();
 
+        // 获取任务的 类名 和 方法名
         [$class, $method] = JobName::parse($payload['job']);
-
+        
+        //如果任务类中有 failed方法就调用，方便开发者自定义
         if (method_exists($this->instance = $this->resolve($class), 'failed')) {
             $this->instance->failed($payload['data'], $e);
         }

@@ -51,6 +51,15 @@ LUA;
      */
     public static function pop()
     {
+        //从队列中取出第一个job
+        //以retrieveNextJob 为例，这个例的KEYS[1] ，默认情况下为 default
+        //如果取出任务，则将job内容decode
+        //将 job 中的 attempts 加 1 ,表示尝试次数增加1
+        //重新将 job 进行 encode
+        //将 job 放到 reserved 队列中
+        // zadd 中 KEYS[2],默认情况下为 default.reserved , ARG[1] 默认情况下为是一个时间戳
+        //同时将 default.notify 队列中取出一个
+
         return <<<'LUA'
 -- Pop the first job off of the queue...
 local job = redis.call('lpop', KEYS[1])
@@ -81,6 +90,10 @@ LUA;
      */
     public static function release()
     {
+        //KEYS[2] 代表 default.reserved
+        //ARGV[1] 代表 reserved job
+        // KEYS[1] 代表 default.delayed
+        //ARGV[2] 代表延迟时间
         return <<<'LUA'
 -- Remove the job from the current queue...
 redis.call('zrem', KEYS[2], ARGV[1])

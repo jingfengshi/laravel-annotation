@@ -171,7 +171,7 @@ class RedisQueue extends Queue implements QueueContract
         }
 
         [$job, $reserved] = $nextJob;
-
+        // 将从redis中取出的job包装成 RedisJob 类
         if ($reserved) {
             return new RedisJob(
                 $this->container, $this, $job,
@@ -207,7 +207,7 @@ class RedisQueue extends Queue implements QueueContract
         return $this->getConnection()->eval(
             LuaScripts::migrateExpiredJobs(), 3, $from, $to, $to.':notify', $this->currentTime()
         );
-    } 
+    }
 
     /**
      * Retrieve the next job from the queue.
@@ -246,6 +246,7 @@ class RedisQueue extends Queue implements QueueContract
      */
     public function deleteReserved($queue, $job)
     {
+        //从 reserved 队列充删除job
         $this->getConnection()->zrem($this->getQueue($queue).':reserved', $job->getReservedJob());
     }
 

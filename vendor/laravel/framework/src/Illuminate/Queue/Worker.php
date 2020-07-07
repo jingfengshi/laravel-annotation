@@ -117,6 +117,9 @@ class Worker
             // First, we will attempt to get the next job off of the queue. We will also
             // register the timeout handler and reset the alarm for this job so it is
             // not stuck in a frozen state forever. Then, we can fire off this job.
+            // 1、尝试从队列中获取到下一个 job
+            // 2、注册超时处理程序
+            // 3、处理任务
             $job = $this->getNextJob(
                 $this->manager->connection($connectionName), $queue
             );
@@ -128,6 +131,8 @@ class Worker
             // If the daemon should run (not in maintenance mode, etc.), then we can run
             // fire off this job for processing. Otherwise, we will need to sleep the
             // worker so no more jobs are processed until they should be processed.
+            // 处理任务
+            // 如果 job 可以被执行就执行，否则就需要让 woker sleep一会不去执行其他 job
             if ($job) {
                 $this->runJob($job, $connectionName, $options);
             } else {
@@ -157,8 +162,14 @@ class Worker
         // We will register a signal handler for the alarm signal so that we can kill this
         // process if it is running too long because it has frozen. This uses the async
         // signals supported in recent versions of PHP to accomplish it conveniently.
+        // 为警报信号注意一个处理程序。
+        // 如果一个程序因为冻结而处理太长，可以被处理
+        // 新版本的PHP支持异步可以很方便的处理
+
+        // 函数pcntl_signal()为signo指定的信号安装一个新 的信号处理器。
         pcntl_signal(SIGALRM, function () use ($job, $options) {
             if ($job) {
+                //如果joby因为超过尝试最大次数失败需要被标记
                 $this->markJobAsFailedIfWillExceedMaxAttempts(
                     $job->getConnectionName(), $job, (int) $options->maxTries, $this->maxAttemptsExceededException($job)
                 );
@@ -166,7 +177,7 @@ class Worker
 
             $this->kill(1);
         });
-
+        // 创建一个计时器，在指定的秒数后向进程发送一个SIGALRM信号。每次对 pcntl_alarm()的调用都会取消之前设置的alarm信号。
         pcntl_alarm(
             max($this->timeoutForJob($job, $options), 0)
         );
@@ -340,8 +351,13 @@ class Worker
             // First we will raise the before job event and determine if the job has already ran
             // over its maximum attempt limits, which could primarily happen when this job is
             // continually timing out and not actually throwing any exceptions from itself.
+            // 触发 before job event 来确定 job 是否已经超过最大尝试次数
             $this->raiseBeforeJobEvent($connectionName, $job);
 
+            // 任务在执行的过程会出现异常
+            // 这个时候就要判断 job 失败次数是不是超过了限制
+            // 如果没有超过了，那么就会将 job 重新放回到队列中
+            // 如果超过了，那么就要把当前 job 标记为失败，并且将任务从 reserved 队列中删除
             $this->markJobAsFailedIfAlreadyExceedsMaxAttempts(
                 $connectionName, $job, (int) $options->maxTries
             );
@@ -355,8 +371,12 @@ class Worker
             // proper events will be fired to let any listeners know this job has finished.
             $job->fire();
 
+            // 触发 after job event
             $this->raiseAfterJobEvent($connectionName, $job);
         } catch (Throwable $e) {
+            //当任务遇到异常的时候，
+            //程序仍然会判断当前任务的重试次数
+            //如果本次任务的重试次数已经大于或等于限制，那么就会停止重试，标记为失败；否则就会重新放入队列，记录日志。
             $this->handleJobException($connectionName, $job, $options, $e);
         }
     }
@@ -382,7 +402,7 @@ class Worker
                 $this->markJobAsFailedIfWillExceedMaxAttempts(
                     $connectionName, $job, (int) $options->maxTries, $e
                 );
-
+                //超过最大执行次数
                 $this->markJobAsFailedIfWillExceedMaxExceptions(
                     $connectionName, $job, $e
                 );
@@ -395,6 +415,8 @@ class Worker
             // If we catch an exception, we will attempt to release the job back onto the queue
             // so it is not lost entirely. This'll let the job be retried at a later time by
             // another listener (or this same one). We will re-throw this exception after.
+            //一旦任务出现异常错误。那么该任务将会立刻从 reserved 队列放入 delayed 队列，
+            //并且抛出异常，抛出异常后，程序会将其记录在日志中
             if (! $job->isDeleted() && ! $job->isReleased() && ! $job->hasFailed()) {
                 $job->release(
                     method_exists($job, 'delaySeconds') && ! is_null($job->delaySeconds())
@@ -449,12 +471,14 @@ class Worker
      */
     protected function markJobAsFailedIfWillExceedMaxAttempts($connectionName, $job, $maxTries, Throwable $e)
     {
+        // 获取最大尝试次数
         $maxTries = ! is_null($job->maxTries()) ? $job->maxTries() : $maxTries;
 
+        //如果超时时间小于当前时间，任务失败
         if ($job->timeoutAt() && $job->timeoutAt() <= Carbon::now()->getTimestamp()) {
             $this->failJob($job, $e);
         }
-
+        // 最大尝试次数 超过配置
         if ($maxTries > 0 && $job->attempts() >= $maxTries) {
             $this->failJob($job, $e);
         }
@@ -508,6 +532,7 @@ class Worker
      */
     protected function raiseBeforeJobEvent($connectionName, $job)
     {
+        // 触发 队伍 job 之前的 事件
         $this->events->dispatch(new JobProcessing(
             $connectionName, $job
         ));
