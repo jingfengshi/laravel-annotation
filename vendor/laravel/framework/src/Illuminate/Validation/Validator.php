@@ -332,6 +332,9 @@ class Validator implements ValidatorContract
         // We'll spin through each rule, validating the attributes attached to that
         // rule. Any error messages will be added to the containers with each of
         // the other error messages, returning true if we don't have messages.
+        // 我们会遍历每一条规则，验证每个属性的规则
+        // 任何错误任何错误消息都将添加到包含
+        // 其他错误消息，如果没有消息则返回true
         foreach ($this->rules as $attribute => $rules) {
             if ($this->shouldBeExcluded($attribute)) {
                 $this->removeAttribute($attribute);
@@ -360,7 +363,6 @@ class Validator implements ValidatorContract
         foreach ($this->after as $after) {
             $after();
         }
-
         return $this->messages->isEmpty();
     }
 
@@ -441,7 +443,7 @@ class Validator implements ValidatorContract
 
     /**
      * Get the attributes and values that were validated.
-     *
+     * 获取验证通过的属性和值
      * @return array
      *
      * @throws \Illuminate\Validation\ValidationException
@@ -458,18 +460,16 @@ class Validator implements ValidatorContract
 
         foreach (array_keys($this->getRules()) as $key) {
             $value = data_get($this->getData(), $key, $missingValue);
-
             if ($value !== $missingValue) {
                 Arr::set($results, $key, $value);
             }
         }
-
         return $results;
     }
 
     /**
      * Validate a given attribute against a rule.
-     *
+     * 验证属性规则
      * @param  string  $attribute
      * @param  string  $rule
      * @return void
@@ -483,10 +483,12 @@ class Validator implements ValidatorContract
         if ($rule == '') {
             return;
         }
-
         // First we will get the correct keys for the given attribute in case the field is nested in
         // an array. Then we determine if the given rule accepts other field names as parameters.
         // If so, we will replace any asterisks found in the parameters with the correct keys.
+        //首先，我们将获得给定属性的正确键，以防字段嵌套在其中
+        //一个数组。然后确定给定规则是否接受其他字段名作为参数。
+        //如果是这样，我们将用正确的键替换参数中的星号。
         if (($keys = $this->getExplicitKeys($attribute)) &&
             $this->dependsOnOtherFields($rule)) {
             $parameters = $this->replaceAsterisksInParameters($parameters, $keys);
@@ -515,7 +517,6 @@ class Validator implements ValidatorContract
         }
 
         $method = "validate{$rule}";
-
         if ($validatable && ! $this->$method($attribute, $value, $parameters, $this)) {
             $this->addFailure($attribute, $rule, $parameters);
         }
@@ -757,8 +758,8 @@ class Validator implements ValidatorContract
         $this->messages->add($attribute, $this->makeReplacements(
             $this->getMessage($attribute, $rule), $attribute, $rule, $parameters
         ));
-
         $this->failedRules[$attribute][$rule] = $parameters;
+
     }
 
     /**
@@ -800,10 +801,10 @@ class Validator implements ValidatorContract
         if (! $this->messages) {
             $this->passes();
         }
-
         $invalid = array_intersect_key(
             $this->data, $this->attributesThatHaveMessages()
         );
+
 
         $result = [];
 

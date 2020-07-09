@@ -21,7 +21,7 @@ class ValidationServiceProvider extends ServiceProvider implements DeferrablePro
 
     /**
      * Register the validation factory.
-     *
+     * 注册验证工厂
      * @return void
      */
     protected function registerValidationFactory()
@@ -42,7 +42,7 @@ class ValidationServiceProvider extends ServiceProvider implements DeferrablePro
 
     /**
      * Register the database presence verifier.
-     *
+     * 注册数据库状态验证程序
      * @return void
      */
     protected function registerPresenceVerifier()

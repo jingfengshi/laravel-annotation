@@ -202,7 +202,6 @@ class ValidationRuleParser
         }
 
         $rules[0] = static::normalizeRule($rules[0]);
-
         return $rules;
     }
 
@@ -219,7 +218,7 @@ class ValidationRuleParser
 
     /**
      * Parse a string based rule.
-     *
+     * 解析字符串规则
      * @param  string  $rules
      * @return array
      */
@@ -230,6 +229,8 @@ class ValidationRuleParser
         // The format for specifying validation rules and parameters follows an
         // easy {rule}:{parameters} formatting convention. For instance the
         // rule "Max:3" states that the value may only be three letters.
+        // 指定验证规则和参数的格式 {rule}:{parameters} 的约定
+        // 例如 "Max:3" 表示值只能是3个字母
         if (strpos($rules, ':') !== false) {
             [$rules, $parameter] = explode(':', $rules, 2);
 
@@ -241,7 +242,7 @@ class ValidationRuleParser
 
     /**
      * Parse a parameter list.
-     *
+     * 解析 参数 list
      * @param  string  $rule
      * @param  string  $parameter
      * @return array
