@@ -13,6 +13,7 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use SebastianBergmann\CodeCoverage\TestFixture\C;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Migrator
@@ -98,6 +99,9 @@ class Migrator
         // Once we grab all of the migration files for the path, we will compare them
         // against the migrations that have already been run for this package then
         // run each of the outstanding migrations against a database connection.
+        // 一旦我们获取了路径的所有迁移文件，我们将对它们进行比较
+        // 针对已经为此包 运行的迁移
+        // 针对数据库连接运行每个未完成的迁移
         $files = $this->getMigrationFiles($paths);
 
         $this->requireFiles($migrations = $this->pendingMigrations(
@@ -139,6 +143,7 @@ class Migrator
         // First we will just make sure that there are any migrations to run. If there
         // aren't, we will just make a note of it to the developer so they're aware
         // that all of the migrations have been run against this database system.
+        // 首先，我们将确保有任何迁移要运行。如果有不是，我们会把它记下来让开发者知道所有的迁移都是针对这个数据库系统运行的
         if (count($migrations) === 0) {
             $this->fireMigrationEvent(new NoPendingMigrations('up'));
 
@@ -150,6 +155,7 @@ class Migrator
         // Next, we will get the next batch number for the migrations so we can insert
         // correct batch number in the database migrations repository when we store
         // each migration's execution. We will also extract a few of the options.
+        // 接下来，我门将获取下一批次需要迁移的迁移，以便插入数据库时，更正数据库迁移表的批次号。
         $batch = $this->repository->getNextBatchNumber();
 
         $pretend = $options['pretend'] ?? false;
@@ -185,9 +191,11 @@ class Migrator
         // First we will resolve a "real" instance of the migration class from this
         // migration file name. Once we have the instances we can run the actual
         // command such as "up" or "down", or we can just simulate the action.
+
         $migration = $this->resolve(
             $name = $this->getMigrationName($file)
         );
+
 
         if ($pretend) {
             return $this->pretendToRun($migration, 'up');
@@ -429,10 +437,12 @@ class Migrator
         // Now that we have the connections we can resolve it and pretend to run the
         // queries against the database returning the array of raw SQL statements
         // that would get fired against the database system for this migration.
+
         $db = $this->resolveConnection(
             $migration->getConnection()
         );
 
+     
         return $db->pretend(function () use ($migration, $method) {
             if (method_exists($migration, $method)) {
                 $migration->{$method}();

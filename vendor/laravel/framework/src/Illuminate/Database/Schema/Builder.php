@@ -160,8 +160,11 @@ class Builder
      */
     public function create($table, Closure $callback)
     {
+
         $this->build(tap($this->createBlueprint($table), function ($blueprint) use ($callback) {
             $blueprint->create();
+
+
 
             $callback($blueprint);
         }));
@@ -287,6 +290,7 @@ class Builder
      */
     protected function build(Blueprint $blueprint)
     {
+        
         $blueprint->build($this->connection, $this->grammar);
     }
 

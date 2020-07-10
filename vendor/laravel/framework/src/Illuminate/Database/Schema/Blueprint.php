@@ -98,6 +98,7 @@ class Blueprint
      */
     public function build(Connection $connection, Grammar $grammar)
     {
+
         foreach ($this->toSql($connection, $grammar) as $statement) {
             $connection->statement($statement);
         }
@@ -122,6 +123,7 @@ class Blueprint
         $this->ensureCommandsAreValid($connection);
 
         foreach ($this->commands as $command) {
+
             $method = 'compile'.ucfirst($command->name);
 
             if (method_exists($grammar, $method) || $grammar::hasMacro($method)) {
@@ -130,7 +132,7 @@ class Blueprint
                 }
             }
         }
-
+        dd($statements);
         return $statements;
     }
 
@@ -180,6 +182,7 @@ class Blueprint
      */
     protected function addImpliedCommands(Grammar $grammar)
     {
+
         if (count($this->getAddedColumns()) > 0 && ! $this->creating()) {
             array_unshift($this->commands, $this->createCommand('add'));
         }
@@ -242,6 +245,7 @@ class Blueprint
                 }
 
                 $value = $column->{$attributeName};
+
 
                 $this->addCommand(
                     $commandName, compact('value', 'column')
